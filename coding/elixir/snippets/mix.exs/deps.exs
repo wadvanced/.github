@@ -1,9 +1,11 @@
+# The `consistency` alias runs all the styling tools at once.
+#
 # Add the following to your project configuration in mix.exs
 #
 # dialyzer: [
-#   plt_core_path: "priv/plts",
-#   plt_file: {:no_warn, "priv/plts/core.plt"}
-# ]
+#     plt_add_apps: [:eex, :mix]
+# ],
+#   aliases: aliases()
 
 [
   {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
@@ -11,6 +13,18 @@
   {:doctor, "~> 0.22", only: :dev, runtime: false},
   {:ex_doc, "~> 0.38", only: :dev, runtime: false}
 ]
+
+defp aliases do
+  [
+    consistency: [
+      "format",
+      "compile --warnings-as-errors",
+      "credo --strict",
+      "dialyzer",
+      "doctor"
+    ]
+  ]
+end
 
 # ## Dependencies
 #
