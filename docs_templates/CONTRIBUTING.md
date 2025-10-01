@@ -1,6 +1,6 @@
 # Contributing to [Project Name]
 
-First off, thank you for considering contributing to [Project Name]! It's people like you that make the open-source community such a great place.
+Thank you for considering contributing to [Project Name]!
 
 ## How Can I Contribute?
 
@@ -20,7 +20,7 @@ First off, thank you for considering contributing to [Project Name]! It's people
 3.  **Make your changes** and ensure that the test suite passes.
 4.  **Add tests** for any new functionality.
 5.  **Update the documentation** if you've changed the API.
-6.  **Ensure your code lints** by running `mix format`.
+6.  **Ensure your code lints** by running `mix consistency`.
 7.  **Issue that pull request!**
 
 ## Style Guides
@@ -137,4 +137,4 @@ Please ensure that your changes pass all these checks before submitting a pull r
 
 ## Code of Conduct
 
-This project and everyone participating in it is governed by the [Code of Conduct](https://docs.github.com/en/site-policy/github-terms/github-community-code-of-conduct). By participating, you are expected to uphold this code. Please report unacceptable behavior to [your-email@example.com](mailto:your-email@example.com).
+This project and everyone participating in it is governed by the [Code of Conduct]([../CODE_OF_CONDUCT.md](https://github.com/wadvanced/.github/blob/main/CODE_OF_CONDUCT.md)). By participating, you are expected to uphold this code. Please report unacceptable behavior to [your-email@example.com](mailto:your-email@example.com).
