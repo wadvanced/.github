@@ -2,14 +2,14 @@
 
 <div align="center">
   <a href="#">
-    <img src="images/dev-toolkit.svg" alt="Dev Toolkit Logo" width="200" height="200">
+    <img src="images/dot-github.svg" alt=".github Logo" width="200" height="200">
   </a>
 </div>
 <div>
 
-# Dev Toolkit
+# .github
 
-A curated collection of documentation, code snippets, and other resources for software development.
+This repository serves as the central health repository for all projects under the @wadvanced organization on GitHub. It contains standardized documentation, templates, and configuration files to ensure consistency and quality across all our repositories.
 
 ---
 
@@ -26,15 +26,9 @@ This repository is a centralized collection of common resources used across vari
 
 ## 🚀 How to Use
 
-The resources in this repository are meant to be copied and adapted for your own projects.
+This repository is not meant to be cloned directly. Instead, its contents are used by GitHub to provide default community health files for all repositories under the @wadvanced organization.
 
-- **Cloning the repository:**
-  ```bash
-  git clone https://github.com/wadvanced/dev-toolkit.git
-  cd dev-toolkit
-  ```
-
-You can then browse the directories to find the resources you need.
+For more information, see the [GitHub documentation on creating a default community health file](https://docs.github.com/en/communities/setting-up-your-project-for-healthy-contributions/creating-a-default-community-health-file).
 
 ---
 
