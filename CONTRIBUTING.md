@@ -1,13 +1,13 @@
-# Contributing to Dev Toolkit
+# Contributing to .github
 
-First off, thank you for considering contributing to Dev Toolkit! It's people like you that make the open-source community such a great place.
+First off, thank you for considering contributing to .github! It's people like you that make the open-source community such a great place.
 
 ## How Can I Contribute?
 
 ### Reporting Bugs
 
-- **Ensure the bug was not already reported** by searching on GitHub under [Issues](https://github.com/wadvanced/dev-toolkit/issues).
-- If you're unable to find an open issue addressing the problem, [open a new one](https://github.com/wadvanced/dev-toolkit/issues/new). Be sure to include a **title and clear description**, as much relevant information as possible, and a **code sample** or an **executable test case** demonstrating the expected behavior that is not occurring.
+- **Ensure the bug was not already reported** by searching on GitHub under [Issues](https://github.com/wadvanced/.github/issues).
+- If you're unable to find an open issue addressing the problem, [open a new one](https://github.com/wadvanced/.github/issues/new). Be sure to include a **title and clear description**, as much relevant information as possible, and a **code sample** or an **executable test case** demonstrating the expected behavior that is not occurring.
 
 ### Suggesting Enhancements
 
@@ -19,6 +19,10 @@ First off, thank you for considering contributing to Dev Toolkit! It's people li
 2.  **Make your changes**.
 3.  **Update the documentation** if you've changed anything.
 4.  **Issue that pull request!**
+
+## Code of Conduct
+
+We have a [Code of Conduct](./CODE_OF_CONDUCT.md) that all contributors are expected to follow. Please make sure you are familiar with its contents.
 
 ## Style Guides
 
