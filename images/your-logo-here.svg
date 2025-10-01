@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="48" fill="#f0f0f0" stroke="#999" stroke-width="2"/>
+  <text x="50" y="30" font-size="24" text-anchor="middle">Y<tspan font-size="8">our</tspan></text>
+  <text x="50" y="55" font-size="24" text-anchor="middle">L<tspan font-size="8">ogo</tspan></text>
+  <text x="50" y="80" font-size="24" text-anchor="middle">H<tspan font-size="8">ere</tspan></text>
+</svg>
