@@ -133,6 +133,8 @@ We follow the [Elixir Style Guide](https://github.com/christopheradams/elixir_st
 
 Please ensure that your changes pass all these checks before submitting a pull request.
 
+**Note:** The Elixir projects include a `mix consistency` alias that runs all of these styling tools at once.
+
 ## Code of Conduct
 
 This project and everyone participating in it is governed by the [Code of Conduct](https://docs.github.com/en/site-policy/github-terms/github-community-code-of-conduct). By participating, you are expected to uphold this code. Please report unacceptable behavior to [your-email@example.com](mailto:your-email@example.com).
