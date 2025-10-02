@@ -12,6 +12,7 @@
 [![Last Commit](https://img.shields.io/github/last-commit/[your-username]/[your-repo].svg)](https://github.com/[your-username]/[your-repo]/commits/main)
 [![Twitter Follow](https://img.shields.io/twitter/follow/[your-twitter-handle].svg?style=social)](https://twitter.com/[your-twitter-handle])
 [![Discord](https://img.shields.io/discord/[your-discord-server-id].svg?logo=discord&colorB=7289DA)](https://discord.gg/[your-invite-code])
+[![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-%23FE5196?logo=conventionalcommits&logoColor=white)](https://conventionalcommits.org)
 
 <div align="center">
   <a href="https://your-website.com">
