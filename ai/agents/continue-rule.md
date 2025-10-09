@@ -61,7 +61,7 @@ description: A description of your rule
 - Type Enforcement:
   - @doc goes only on the FIRST of arity matched functions, it DOES NOT repeat for the rest of arity matched.
   - Always use parentheses: map() not map, MyStruct.t() not MyStruct
-  - Never use any() – replace with concrete types
+  - Never use any() – replace with concrete types: binary(), tuple(), map(), integer(), etc.
   - Never document internal map structures
   - Enclose in backticks %AnyStructName{}, {any_tuple} or %{} to make it compatible with ex_doc generation.
 - Examples:
@@ -92,6 +92,6 @@ description: A description of your rule
 
 ## Formatting Rules
 - Line length: Max 98 chars
-- Types: Always parenthesized (e.g., list(String.t()))
+- Types: Always parenthesized (e.g., list(binary())
 - Options: Use bullet points under parameter description using dash
 - Returns: Explicit return type before description
