@@ -74,6 +74,7 @@ description: 'Generate ex_doc-compatible documentation'
   - Add parentheses: keyword → keyword()
   - Replace any() with specific types
 - Never use :: in arguments (invalid: arg :: type())
+- Just use the first type found, do not specify its inner types. For example: list(), instead of list(binary())
 
 ## Private Functions Handling
 1. Positioning:
