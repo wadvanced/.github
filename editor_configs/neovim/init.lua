@@ -451,12 +451,20 @@ require("lazy").setup({
         direction = "float",
         close_on_exit = false,
         persist_size = true,
+        start_in_insert = true,
       })
-      -- Toggle terminal mapping (leader + tt)
-      vim.keymap.set("n", "<leader>tt", "<cmd>ToggleTerm<CR>", { desc = "Toggle terminal" })
+
+      -- Toggle terminal mapping (leader + tt) - starts in insert mode
+      vim.keymap.set("n", "<leader>tt", function()
+        -- Open terminal
+        require("toggleterm").toggle()
+        -- Enter insert mode after a short delay to ensure terminal is ready
+        vim.defer_fn(function()
+          vim.cmd("startinsert")
+        end, 50)
+      end, { desc = "Toggle terminal" })
     end,
   },
-
 })
 
 -- General keymaps (safe for SSH)
@@ -484,9 +492,9 @@ vim.keymap.set("n", "<leader>nh", "<cmd>nohl<cr>", { desc = "Clear highlights" }
 vim.keymap.set("v", "<", "<gv")
 vim.keymap.set("v", ">", ">gv")
 
--- Utility: run shell commands and populate quickfix so clicking works
+-- Utility: parse command output into quickfix items
+-- Example error line:
 -- └─ test/support/app/accounts/user.ex:57:54: Aurora.Uix.Test.Accounts.User.changeset/2
-
 local function parse_and_build_qf(lines)
   -- lines: array of strings from command output
   local qf_items = {}
@@ -496,28 +504,28 @@ local function parse_and_build_qf(lines)
       goto continue
     end
 
-    -- Try pattern: path:line:col: message
-    local path, lnum, col, msg = raw:match("^[ \t└─]*([a-z/%.]+):(%d+):(%d+): (.*)")
+    -- Try pattern: path:line:col: message (allow leading spaces or '└─')
+    local path, lnum, col, msg = raw:match("^[ \t└─]*([%w%p_/\\]+%.exs?):(%d+):(%d+):%s*(.+)$")
     if path and lnum then
       table.insert(qf_items, { filename = path, lnum = tonumber(lnum), col = tonumber(col), text = msg })
       goto continue
     end
 
     -- Try pattern: path:line: message
-    path, lnum, msg = raw:match("^[ \t└─]*([a-z/%.]+):(%d+): (.*)")
+    path, lnum, msg = raw:match("^[ \t└─]*([%w%p_/\\]+%.exs?):(%d+):%s*(.+)$")
     if path and lnum then
       table.insert(qf_items, { filename = path, lnum = tonumber(lnum), text = msg })
       goto continue
     end
 
-    -- Try pattern with leading "./" or absolute paths containing spaces (rare)
-    path, lnum, col, msg = raw:match("^[ \t└─]*(.+%.exs|.+%.ex):(%d+):(%d+):%s*(.+)$")
+    -- Try pattern for .ex files or more generic absolute paths
+    path, lnum, col, msg = raw:match("^[ \t└─]*(.+%.ex):(%d+):(%d+):%s*(.+)$")
     if path and lnum then
       table.insert(qf_items, { filename = path, lnum = tonumber(lnum), col = tonumber(col), text = msg })
       goto continue
     end
 
-    -- Last fallback: add raw line into quickfix with no filename (so it appears but isn't jumpable)
+    -- Fallback: raw text as quickfix entry without filename
     table.insert(qf_items, { filename = "", lnum = 0, text = raw })
     ::continue::
   end
@@ -525,55 +533,98 @@ local function parse_and_build_qf(lines)
   return qf_items
 end
 
-local function run_cmd_to_quickfix(cmd)
-  -- Run command synchronously and populate quickfix list with parsed entries
-  -- vim.fn.systemlist runs the command in the shell and returns list of lines
-  -- We prefix with 'set -o pipefail; ' to try to preserve failure status; keep simple for mobile.
-  local shell_cmd = cmd
-  local lines = vim.fn.systemlist(shell_cmd)
+-- Async runner: start job, notify start, capture output, populate quickfix on exit
+local function run_cmd_to_quickfix_async(cmd)
+  -- Notify immediate start so user sees something right away
+  vim.notify(("Started: %s"):format(cmd), vim.log.levels.INFO)
 
-  -- If systemlist returns single line with exit code text on some shells, it's still fine
-  local qf_items = parse_and_build_qf(lines)
+  local stdout_lines = {}
+  local stderr_lines = {}
 
-  if #qf_items == 0 then
-    -- If parsing failed to find anything, place raw output as a single quickfix entry
-    local joined = table.concat(lines, "\n")
-    qf_items = { { filename = "", lnum = 0, text = joined } }
-  end
+  -- jobstart with shell so user can pass complex commands; use sh -c
+  local handle = vim.fn.jobstart({ "sh", "-c", cmd }, {
+    stdout_buffered = true,
+    stderr_buffered = true,
+    -- Collect stdout when available
+    on_stdout = function(_, data)
+      if data and #data > 0 then
+        for _, line in ipairs(data) do
+          if line ~= "" then table.insert(stdout_lines, line) end
+        end
+      end
+    end,
+    -- Collect stderr when available
+    on_stderr = function(_, data)
+      if data and #data > 0 then
+        for _, line in ipairs(data) do
+          if line ~= "" then table.insert(stderr_lines, line) end
+        end
+      end
+    end,
+    -- When job exits, parse output and populate quickfix (use vim.schedule to interact with API)
+    on_exit = function(_, exit_code)
+      vim.schedule(function()
+        local combined = {}
 
-  -- Set quickfix list and open it
-  vim.fn.setqflist({}, " ", { title = cmd, items = qf_items })
-  -- Open quickfix window but keep focus in previous window (open in bottom)
-  vim.cmd("copen")
-  -- Move cursor to first entry if any meaningful (skip entries with no filename)
-  local first_valid = nil
-  for i, item in ipairs(qf_items) do
-    if item.filename ~= "" and item.lnum and item.lnum > 0 then
-      first_valid = i
-      break
+        -- Prefer stdout, but include stderr after (preserve order approximately)
+        for _, l in ipairs(stdout_lines) do table.insert(combined, l) end
+        for _, l in ipairs(stderr_lines) do table.insert(combined, l) end
+
+        -- If there's no output at all, show a message with exit code
+        if #combined == 0 then
+          table.insert(combined, ("[No output] (exit: %d)"):format(exit_code))
+        end
+
+        local qf_items = parse_and_build_qf(combined)
+        if #qf_items == 0 then
+          table.insert(qf_items, { filename = "", lnum = 0, text = table.concat(combined, "\n") })
+        end
+
+        vim.fn.setqflist({}, " ", { title = cmd, items = qf_items })
+        -- Open quickfix window
+        vim.cmd("copen")
+        -- Jump to first valid entry
+        local first_valid = nil
+        for i, item in ipairs(qf_items) do
+          if item.filename ~= "" and item.lnum and item.lnum > 0 then
+            first_valid = i
+            break
+          end
+        end
+        if first_valid then
+          vim.cmd("cc " .. (first_valid - 1))
+        end
+
+        vim.notify(("Finished: %s  — quickfix contains %d items (exit: %d)"):format(cmd, #qf_items, exit_code), vim.log.levels.INFO)
+      end)
+    end,
+  })
+
+  if handle <= 0 then
+    -- jobstart failed synchronously; fallback to blocking run so user still gets output
+    vim.notify(("Failed to start job for: %s — falling back to sync run"):format(cmd), vim.log.levels.WARN)
+    local lines = vim.fn.systemlist(cmd)
+    local qf_items = parse_and_build_qf(lines)
+    if #qf_items == 0 then
+      table.insert(qf_items, { filename = "", lnum = 0, text = table.concat(lines, "\n") })
     end
+    vim.fn.setqflist({}, " ", { title = cmd, items = qf_items })
+    vim.cmd("copen")
   end
-  if first_valid then
-    vim.cmd("cc " .. (first_valid - 1)) -- 0-based internally; cc uses idx
-  end
-
-  -- Also print a short message
-  print(string.format("Ran: %s  — quickfix contains %d items", cmd, #qf_items))
 end
 
--- Mix helpers: run mix command and populate quickfix
+-- Mix helpers: run mix command and populate quickfix asynchronously
 local function run_mix_test()
-  -- Prefer to run in project root; user expects to run from cwd
-  run_cmd_to_quickfix("mix test")
+  run_cmd_to_quickfix_async("mix test")
 end
 
 local function run_mix_consistency()
-  run_cmd_to_quickfix("mix consistency")
+  run_cmd_to_quickfix_async("mix consistency")
 end
 
--- Mix commands keymaps (replace the old shell-! mappings so results go to quickfix)
-vim.keymap.set("n", "<leader>mt", run_mix_test, { desc = "Run mix test and populate quickfix" })
-vim.keymap.set("n", "<leader>mc", run_mix_consistency, { desc = "Run mix consistency and populate quickfix" })
+-- Mix commands keymaps (replace the old shell-! mappings so results go to quickfix async)
+vim.keymap.set("n", "<leader>mt", run_mix_test, { desc = "Run mix test and populate quickfix (async)" })
+vim.keymap.set("n", "<leader>mc", run_mix_consistency, { desc = "Run mix consistency and populate quickfix (async)" })
 
 -- Phoenix-specific shortcuts
 vim.keymap.set("n", "<leader>ps", "<cmd>!mix phx.server<cr>", { desc = "Start Phoenix server" })
@@ -586,4 +637,5 @@ vim.keymap.set("n", "<leader>pt", "<cmd>!MIX_ENV=test iex --dot-iex \"test/start
 -- vim.keymap.set("n", "<leader>MC", "<cmd>ToggleTerm direction=float cmd='mix consistency'<CR>", { desc = "Run mix consistency in terminal" })
 
 print("Neovim config loaded successfully!")
+
 
