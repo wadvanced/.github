@@ -183,7 +183,7 @@ require("lazy").setup({
     config = function()
       require("copilot").setup({
         suggestion = {
-          enabled = false,
+          enabled = true,
           auto_trigger = true,
           keymap = {
             accept = "<C-y>",
@@ -291,6 +291,7 @@ require("lazy").setup({
   -- File explorer (simpler than telescope for mobile)
   {
     "stevearc/oil.nvim",
+    
     config = function()
       require("oil").setup({
         default_file_explorer = true,
@@ -298,6 +299,7 @@ require("lazy").setup({
         view_options = {
           show_hidden = true,
         },
+
         keymaps = {
           -- ["`"] = false, -- Disable the backtick keymap
           ["<leader>d"] = {
@@ -505,21 +507,21 @@ local function parse_and_build_qf(lines)
     end
 
     -- Try pattern: path:line:col: message (allow leading spaces or '└─')
-    local path, lnum, col, msg = raw:match("^[ \t└─]*([%w%p_/\\]+%.exs?):(%d+):(%d+):%s*(.+)$")
+    local path, lnum, col, msg = raw:match("^[ \t└─┃%*]*([%w%p_/\\]+%.exs?):(%d+):(%d+):%s*(.+)$")
     if path and lnum then
       table.insert(qf_items, { filename = path, lnum = tonumber(lnum), col = tonumber(col), text = msg })
       goto continue
     end
 
     -- Try pattern: path:line: message
-    path, lnum, msg = raw:match("^[ \t└─]*([%w%p_/\\]+%.exs?):(%d+):%s*(.+)$")
+    path, lnum, msg = raw:match("^[ \t└─┃%*]*([%w%p_/\\]+%.exs?):(%d+):%s*(.+)$")
     if path and lnum then
       table.insert(qf_items, { filename = path, lnum = tonumber(lnum), text = msg })
       goto continue
     end
 
     -- Try pattern for .ex files or more generic absolute paths
-    path, lnum, col, msg = raw:match("^[ \t└─]*(.+%.ex):(%d+):(%d+):%s*(.+)$")
+    path, lnum, col, msg = raw:match("^[ \t└─┃%*]*(.+%.ex):(%d+):(%d+):%s*(.+)$")
     if path and lnum then
       table.insert(qf_items, { filename = path, lnum = tonumber(lnum), col = tonumber(col), text = msg })
       goto continue
@@ -628,7 +630,30 @@ vim.keymap.set("n", "<leader>mc", run_mix_consistency, { desc = "Run mix consist
 
 -- Phoenix-specific shortcuts
 vim.keymap.set("n", "<leader>ps", "<cmd>!mix phx.server<cr>", { desc = "Start Phoenix server" })
-vim.keymap.set("n", "<leader>pt", "<cmd>!MIX_ENV=test iex --dot-iex \"test/start_test_server.exs\" -S mix<cr>", { desc = "Start Test server" })
+
+-- Test server terminal management
+local test_server_buf = nil
+
+vim.keymap.set("n", "<leader>pt", function()
+  -- If buffer exists and is valid, just focus it
+  if test_server_buf and vim.api.nvim_buf_is_valid(test_server_buf) then
+    local wins = vim.fn.win_findbuf(test_server_buf)
+    if #wins > 0 then
+      vim.api.nvim_set_current_win(wins[1])
+    else
+      vim.cmd('botright vsplit')
+      vim.api.nvim_set_current_buf(test_server_buf)
+    end
+    return
+  end
+
+  -- Create new terminal
+  vim.cmd('botright vsplit')
+  vim.cmd('terminal MIX_ENV=test iex --dot-iex "test/start_test_server.exs" -S mix')
+  test_server_buf = vim.api.nvim_get_current_buf()
+  vim.cmd('startinsert')
+end, { desc = "Start Test server" })
+
 
 -- If you prefer to also keep the older behavior of running the commands in a terminal,
 -- you can add additional mappings (optional). I kept them unbound to avoid duplicate keys.
