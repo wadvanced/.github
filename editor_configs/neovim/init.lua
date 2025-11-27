@@ -97,6 +97,34 @@ if not vim.loop.fs_stat(lazypath) then
 end
 vim.opt.rtp:prepend(lazypath)
 
+-- Control enablement of copilot and completion
+local copilot_enabled = false -- Copilot suggestions upon start enable setting
+
+local sources_without = {
+  { name = "nvim_lsp", group_index = 2 },
+  { name = "luasnip",  group_index = 2 },
+  { name = "buffer",   group_index = 2 },
+  { name = "path",     group_index = 2 },
+}
+
+local sources_with = vim.deepcopy(sources_without)
+table.insert(sources_with, 1, { name = "copilot", group_index = 2 })
+
+function _G.ToggleCopilot()
+  copilot_enabled = not copilot_enabled
+  require("cmp").setup.buffer({ 
+    sources = copilot_enabled and sources_with or sources_without 
+  })
+  vim.cmd("Copilot " .. (copilot_enabled and "enable" or "disable"))
+  
+  -- Notification
+  vim.notify(
+    "Copilot " .. (copilot_enabled and "enabled" or "disabled"),
+    vim.log.levels.INFO,
+    { title = "Copilot" }
+  )
+end
+
 -- Plugin specifications
 require("lazy").setup({
   -- Color scheme
@@ -183,8 +211,8 @@ require("lazy").setup({
     config = function()
       require("copilot").setup({
         suggestion = {
-          enabled = true,
-          auto_trigger = true,
+          enabled = false,
+          auto_trigger = false,
           keymap = {
             accept = "<C-y>",
             accept_word = false,
@@ -195,7 +223,7 @@ require("lazy").setup({
           },
         },
         panel = {
-          enabled = true,
+          enabled = false,
           auto_refresh = false,
           keymap = {
             jump_prev = "[[",
@@ -242,7 +270,8 @@ require("lazy").setup({
       vim.keymap.set("n", "<leader>co", "<cmd>CopilotChatOptimize<cr>", { desc = "Optimize code" })
       vim.keymap.set("n", "<leader>cd", "<cmd>CopilotChatDocs<cr>", { desc = "Generate docs" })
       vim.keymap.set("n", "<leader>ct", "<cmd>CopilotChatTests<cr>", { desc = "Generate tests" })
-      vim.keymap.set("n", "<leader>cp", "<cmd>Copilot toggle<cr>", { desc = "Toggle Copilot" })
+      -- vim.keymap.set("n", "<leader>cp", "<cmd>Copilot toggle<cr>", { desc = "Toggle Copilot" })
+      vim.keymap.set("n", "<leader>cp", ToggleCopilot, { desc = "Toggle Copilot" })
       vim.keymap.set("v", "<leader>cc", "<cmd>CopilotChatToggle<cr>", { desc = "Chat with selection" })
 
     end,
@@ -277,13 +306,9 @@ require("lazy").setup({
           ["<C-e>"] = cmp.mapping.abort(),
           ["<CR>"] = cmp.mapping.confirm({ select = true }),
         }),
-        sources = cmp.config.sources({
-          { name = "copilot", group_index = 2 },
-          { name = "nvim_lsp", group_index = 2 },
-          { name = "luasnip", group_index = 2 },
-          { name = "buffer", group_index = 2 },
-          { name = "path", group_index = 2 },
-        }),
+        sources = cmp.config.sources(
+          copilot_enabled and sources_with or sources_without
+        ),
       })
     end,
   },
@@ -335,15 +360,55 @@ require("lazy").setup({
     dependencies = { "nvim-lua/plenary.nvim" },
     config = function()
       local telescope = require("telescope")
+
       telescope.setup({
         defaults = {
-          layout_strategy = "vertical", -- Better for narrow screens
+          layout_strategy = "vertical",
           layout_config = {
             vertical = {
               width = 0.9,
               height = 0.9,
               preview_height = 0.6,
-            }
+            },
+          },
+
+          find_command = {
+            "fd",
+            "--type", "f",
+            "--hidden",         -- include dotfiles
+            "--follow",         -- follow symlinks
+            "--no-ignore",      -- ignore .gitignore / .ignore files
+            "--strip-cwd-prefix",
+            "--",
+          },
+
+          -- Exclude typical Elixir/Phoenix build & assets folders from telescope results
+          file_ignore_patterns = {
+            -- Elixir / Phoenix
+            "^_build/", "^deps/", "node_modules/", "priv/static/", "assets/node_modules/", "erl_crash.dump",
+            -- editor / language servers
+            "%.elixir_ls/", "%.cache/", "%.venv/",
+            -- git internals
+            "^.git/",
+          },
+
+          -- when using live_grep, ensure rg includes hidden / no-ignore
+          vimgrep_arguments = {
+            "rg",
+            "--hidden",
+            "--no-ignore",
+            "--with-filename",
+            "--line-number",
+            "--column",
+            "--smart-case",
+          },
+
+          -- optional: make find_files behave similarly
+          pickers = {
+            find_files = {
+              hidden = true,
+              no_ignore = true,
+            },
           },
         },
       })
@@ -355,6 +420,7 @@ require("lazy").setup({
       vim.keymap.set("n", "<leader>fh", "<cmd>Telescope help_tags<cr>", { desc = "Help tags" })
     end,
   },
+
 
   -- Git integration
   {
