@@ -69,7 +69,7 @@ description: 'Generate ex_doc-compatible documentation'
 - Include parameter/return types and descriptions
 
 ## @spec Requirements
-- Add missing specs for all the first functions/macros of a arity matched group
+- Add missing specs for all the first functions/macros of a arity matched group including private and public functions
 - Modify existing specs only:
   - Add parentheses: keyword → keyword()
   - Replace any() with specific types
@@ -85,6 +85,7 @@ description: 'Generate ex_doc-compatible documentation'
    - No @doc attributes allowed
    - Add # Descriptive comment above complex functions
    - Parameter descriptions only when non-obvious
+   - @spec attribute is required fot the first function/macros of a arity matched group
 
 ## Formatting Rules
 - Line length: Max 98 chars
