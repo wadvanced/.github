@@ -212,7 +212,7 @@ require("lazy").setup({
       require("copilot").setup({
         suggestion = {
           enabled = false,
-          auto_trigger = false,
+          auto_trigger = true,
           keymap = {
             accept = "<C-y>",
             accept_word = false,
@@ -728,5 +728,4 @@ end, { desc = "Start Test server" })
 -- vim.keymap.set("n", "<leader>MC", "<cmd>ToggleTerm direction=float cmd='mix consistency'<CR>", { desc = "Run mix consistency in terminal" })
 
 print("Neovim config loaded successfully!")
-
 
