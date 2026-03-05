@@ -161,15 +161,11 @@ require("lazy").setup({
       local capabilities = require("cmp_nvim_lsp").default_capabilities()
 
       -- Configure Elixir LS using vim.lsp.config (Neovim 0.11+)
-      vim.lsp.config('elixirls', {
-        cmd = { os.getenv("HOME") .. "/.elixir-ls/release/language_server.sh" },
-        filetypes = { 'elixir', 'eelixir', 'heex', 'surface' },
-        root_markers = { 'mix.exs', '.git' },
-        capabilities = capabilities,
+      vim.lsp.config("expert", {
+        cmd = { "/Users/federico/.local/bin/expert", "--stdio" },
         settings = {
-          elixirLS = {
-            dialyzerEnabled = false, -- Disable for performance on mobile
-            fetchDeps = false,
+          workspaceSymbols = {
+            minQueryLength = 0
           }
         }
       })
@@ -178,7 +174,7 @@ require("lazy").setup({
       vim.api.nvim_create_autocmd('FileType', {
         pattern = { 'elixir', 'eelixir', 'heex', 'surface' },
         callback = function()
-          vim.lsp.enable('elixirls')
+          vim.lsp.enable('expert')
         end,
       })
 
