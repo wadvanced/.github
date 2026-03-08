@@ -383,9 +383,11 @@ require("lazy").setup({
             -- Elixir / Phoenix
             "^_build/", "^deps/", "node_modules/", "priv/static/", "assets/node_modules/", "erl_crash.dump",
             -- editor / language servers
-            "%.elixir_ls/", "%.cache/", "%.venv/",
+            "%.elixir_ls/", "%.cache/", "%.venv/", "%.expert/",
             -- git internals
             "^.git/",
+            -- generated documentation
+            "%.doc/"
           },
 
           -- when using live_grep, ensure rg includes hidden / no-ignore
@@ -686,9 +688,14 @@ local function run_mix_consistency()
   run_cmd_to_quickfix_async("mix consistency")
 end
 
+local function run_mix_precommit()
+  run_cmd_to_quickfix_async("mix precommit")
+end
+
 -- Mix commands keymaps (replace the old shell-! mappings so results go to quickfix async)
 vim.keymap.set("n", "<leader>mt", run_mix_test, { desc = "Run mix test and populate quickfix (async)" })
 vim.keymap.set("n", "<leader>mc", run_mix_consistency, { desc = "Run mix consistency and populate quickfix (async)" })
+vim.keymap.set("n", "<leader>mp", run_mix_precommit, { desc = "Run mix precommit and populate quickfix (async)" })
 
 -- Phoenix-specific shortcuts
 vim.keymap.set("n", "<leader>ps", "<cmd>!mix phx.server<cr>", { desc = "Start Phoenix server" })
@@ -724,4 +731,5 @@ end, { desc = "Start Test server" })
 -- vim.keymap.set("n", "<leader>MC", "<cmd>ToggleTerm direction=float cmd='mix consistency'<CR>", { desc = "Run mix consistency in terminal" })
 
 print("Neovim config loaded successfully!")
+
 
