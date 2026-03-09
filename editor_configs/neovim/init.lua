@@ -531,6 +531,27 @@ require("lazy").setup({
       end, { desc = "Toggle terminal" })
     end,
   },
+  {
+    "nvim-tree/nvim-tree.lua",
+    dependencies = { "nvim-tree/nvim-web-devicons" },
+    config = function()
+      require("nvim-tree").setup({
+        view = {
+          side = "left",
+          width = 35,
+        },
+        actions = {
+          open_file = {
+            quit_on_open = false,
+          },
+        },
+      })
+
+      -- optional keymap to toggle the tree
+      vim.keymap.set("n", "<leader>td", ":NvimTreeToggle<CR>", { silent = true })
+    end,
+  },
+
 })
 
 -- General keymaps (safe for SSH)
