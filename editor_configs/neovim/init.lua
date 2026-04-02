@@ -173,7 +173,13 @@ require("lazy").setup({
       -- Enable Elixir LS on appropriate buffers
       vim.api.nvim_create_autocmd('FileType', {
         pattern = { 'elixir', 'eelixir', 'heex', 'surface' },
-        callback = function()
+        callback = function(args)
+          local clients = vim.lsp.get_clients( { bufnr = args.buf })
+          for _, client in ipairs(clients) do
+            if client.name == "expert" then
+              return
+            end
+          end
           vim.lsp.enable('expert')
         end,
       })
@@ -193,7 +199,12 @@ require("lazy").setup({
       vim.api.nvim_create_autocmd("BufWritePre", {
         pattern = { "*.ex", "*.exs", "*.heex", "*.eex" },
         callback = function()
-          vim.lsp.buf.format({ async = false })
+          vim.lsp.buf.format({ 
+            async = false,
+            filter = function(client)
+              return client.name == "expert"
+            end,  
+	        })
         end,
       })
     end,
@@ -350,76 +361,77 @@ require("lazy").setup({
     end,
   },
 
-  -- Fuzzy finder (essential but using simple keymaps)
-  {
-    "nvim-telescope/telescope.nvim",
-    dependencies = { "nvim-lua/plenary.nvim" },
-    config = function()
-      local telescope = require("telescope")
+-- Fuzzy finder (clean + predictable behavior)
+{
+  "nvim-telescope/telescope.nvim",
+  dependencies = { "nvim-lua/plenary.nvim" },
+  config = function()
+    local telescope = require("telescope")
 
-      telescope.setup({
-        defaults = {
-          layout_strategy = "vertical",
-          layout_config = {
-            vertical = {
-              width = 0.9,
-              height = 0.9,
-              preview_height = 0.6,
-            },
-          },
-
-          find_command = {
-            "fd",
-            "--type", "f",
-            "--hidden",         -- include dotfiles
-            "--follow",         -- follow symlinks
-            "--no-ignore",      -- ignore .gitignore / .ignore files
-            "--strip-cwd-prefix",
-            "--",
-          },
-
-          -- Exclude typical Elixir/Phoenix build & assets folders from telescope results
-          file_ignore_patterns = {
-            -- Elixir / Phoenix
-            "^_build/", "^deps/", "node_modules/", "priv/static/", "assets/node_modules/", "erl_crash.dump",
-            -- editor / language servers
-            "%.elixir_ls/", "%.cache/", "%.venv/", "%.expert/",
-            -- git internals
-            "^.git/",
-            -- generated documentation
-            "%.doc/"
-          },
-
-          -- when using live_grep, ensure rg includes hidden / no-ignore
-          vimgrep_arguments = {
-            "rg",
-            "--hidden",
-            "--no-ignore",
-            "--with-filename",
-            "--line-number",
-            "--column",
-            "--smart-case",
-          },
-
-          -- optional: make find_files behave similarly
-          pickers = {
-            find_files = {
-              hidden = true,
-              no_ignore = true,
-            },
+    telescope.setup({
+      defaults = {
+        layout_strategy = "vertical",
+        layout_config = {
+          vertical = {
+            width = 0.9,
+            height = 0.9,
+            preview_height = 0.6,
           },
         },
+
+        -- Let fd respect .gitignore (no --no-ignore)
+        find_command = {
+          "fd",
+          "--type", "f",
+          "--hidden",         -- include dotfiles
+          "--follow",         -- follow symlinks
+          "--strip-cwd-prefix",
+          "--exclude", ".git",
+          "--",
+        },
+
+        -- Minimal ignores (only things NOT in .gitignore if any)
+        file_ignore_patterns = {
+          "%.elixir_ls/",
+          "%.cache/",
+          "%.git/",
+        },
+
+        -- live_grep also respects .gitignore now
+        vimgrep_arguments = {
+          "rg",
+          "--hidden",
+          "--glob", "!.git/*",
+          "--with-filename",
+          "--line-number",
+          "--column",
+          "--smart-case",
+        },
+      },
+
+      pickers = {
+        find_files = {
+          hidden = true,
+          -- no_ignore removed → respects .gitignore
+        },
+      },
+    })
+
+    -- Keymaps
+    vim.keymap.set("n", "<leader>ff", "<cmd>Telescope find_files<cr>", { desc = "Find files" })
+    vim.keymap.set("n", "<leader>fg", "<cmd>Telescope live_grep<cr>", { desc = "Live grep" })
+    vim.keymap.set("n", "<leader>fb", "<cmd>Telescope buffers<cr>", { desc = "Find buffers" })
+    vim.keymap.set("n", "<leader>fh", "<cmd>Telescope help_tags<cr>", { desc = "Help tags" })
+
+    -- Optional: "deep search" version (ignores .gitignore on demand)
+    vim.keymap.set("n", "<leader>fF", function()
+      require("telescope.builtin").find_files({
+        no_ignore = true,
+        hidden = true,
       })
-
-      -- Telescope keymaps
-      vim.keymap.set("n", "<leader>ff", "<cmd>Telescope find_files<cr>", { desc = "Find files" })
-      vim.keymap.set("n", "<leader>fg", "<cmd>Telescope live_grep<cr>", { desc = "Live grep" })
-      vim.keymap.set("n", "<leader>fb", "<cmd>Telescope buffers<cr>", { desc = "Find buffers" })
-      vim.keymap.set("n", "<leader>fh", "<cmd>Telescope help_tags<cr>", { desc = "Help tags" })
-    end,
-  },
-
-
+    end, { desc = "Find files (including ignored)" })
+  end,
+},
   -- Git integration
   {
     "lewis6991/gitsigns.nvim",
@@ -752,5 +764,4 @@ end, { desc = "Start Test server" })
 -- vim.keymap.set("n", "<leader>MC", "<cmd>ToggleTerm direction=float cmd='mix consistency'<CR>", { desc = "Run mix consistency in terminal" })
 
 print("Neovim config loaded successfully!")
-
 
