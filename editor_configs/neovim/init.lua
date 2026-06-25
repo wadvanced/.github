@@ -563,6 +563,27 @@ require("lazy").setup({
       vim.keymap.set("n", "<leader>td", ":NvimTreeToggle<CR>", { silent = true })
     end,
   },
+  -- Enable system clipboard
+  {
+    "ojroques/nvim-osc52",
+    config = function()
+      local osc52 = require("osc52")
+
+      -- Keymaps
+      vim.keymap.set("n", "<leader>y", osc52.copy_operator, { expr = true })
+      vim.keymap.set("v", "<leader>y", osc52.copy_visual)
+
+      -- Make all yanks go to system clipboard (via OSC52)
+      vim.api.nvim_create_autocmd("TextYankPost", {
+        callback = function()
+          if vim.v.event.operator == "y" then
+            osc52.copy_register('"')
+          end
+        end,
+      })
+    end,
+  },
+
 
 })
 
